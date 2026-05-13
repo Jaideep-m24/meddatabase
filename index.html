@@ -1,0 +1,481 @@
+# index.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medical RFID Information System</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: white;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .header {
+      padding: 30px;
+      background: linear-gradient(90deg, #2563eb, #06b6d4);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .status {
+      background: rgba(255,255,255,0.2);
+      padding: 10px 18px;
+      border-radius: 50px;
+      font-size: 14px;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .scan-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+
+    .scan-box h2 {
+      margin-bottom: 15px;
+      color: #38bdf8;
+    }
+
+    .uid-display {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #22c55e;
+      margin-top: 10px;
+      letter-spacing: 2px;
+    }
+
+    .patient-card {
+      display: none;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .patient-header {
+      background: rgba(37,99,235,0.15);
+      padding: 25px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #06b6d4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .patient-name {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .patient-id {
+      color: #cbd5e1;
+      margin-top: 5px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 25px;
+    }
+
+    .info-box {
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .info-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+
+    .info-value {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .critical {
+      border: 1px solid rgba(239,68,68,0.4);
+      background: rgba(239,68,68,0.08);
+    }
+
+    .critical .info-title {
+      color: #fca5a5;
+    }
+
+    .critical .info-value {
+      color: #fecaca;
+    }
+
+    .footer {
+      padding: 20px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255,255,255,0.2);
+      border-top: 5px solid #38bdf8;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .not-found {
+      display: none;
+      text-align: center;
+      padding: 30px;
+      color: #fca5a5;
+      font-size: 1.2rem;
+    }
+
+    @media(max-width: 768px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .patient-header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .patient-name {
+        font-size: 1.5rem;
+      }
+
+      .uid-display {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <h1>Medical RFID Information System</h1>
+      <div class="status" id="status">Waiting for RFID Scan...</div>
+    </div>
+
+    <div class="content">
+
+      <div class="scan-box">
+        <h2>Scanned RFID UID</h2>
+        <div class="uid-display" id="uidDisplay">--------</div>
+      </div>
+
+      <div class="loader" id="loader"></div>
+
+      <div class="not-found" id="notFound">
+        No patient record found for this RFID card.
+      </div>
+
+      <div class="patient-card" id="patientCard">
+
+        <div class="patient-header">
+          <div class="avatar" id="avatar">P</div>
+
+          <div>
+            <div class="patient-name" id="patientName">Patient Name</div>
+            <div class="patient-id" id="patientUID">UID: 000000</div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+
+          <div class="info-box">
+            <div class="info-title">Height</div>
+            <div class="info-value" id="height">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Weight</div>
+            <div class="info-value" id="weight">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Age</div>
+            <div class="info-value" id="age">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Gender</div>
+            <div class="info-value" id="gender">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Blood Group</div>
+            <div class="info-value" id="blood">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Phone Number</div>
+            <div class="info-value" id="phone">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Doctor</div>
+            <div class="info-value" id="doctor">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Hospital</div>
+            <div class="info-value" id="hospital">--</div>
+          </div>
+
+          <div class="info-box critical">
+            <div class="info-title">Medical Condition</div>
+            <div class="info-value" id="condition">--</div>
+          </div>
+
+          <div class="info-box critical">
+            <div class="info-title">Previous Hospital Visit</div>
+            <div class="info-value" id="visit">--</div>
+          </div>
+
+          <div class="info-box critical">
+            <div class="info-title">Visit Reason</div>
+            <div class="info-value" id="reason">--</div>
+          </div>
+
+          <div class="info-box critical">
+            <div class="info-title">Diagnosis</div>
+            <div class="info-value" id="diagnosis">--</div>
+          </div>
+
+          <div class="info-box critical">
+            <div class="info-title">Allergies</div>
+            <div class="info-value" id="allergies">--</div>
+          </div>
+
+          <div class="info-box critical">
+            <div class="info-title">Emergency Contact</div>
+            <div class="info-value" id="emergency">--</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Last Updated</div>
+            <div class="info-value" id="updated">--</div>
+          </div>
+
+        <div style="padding: 25px;">
+
+          <div class="info-box" style="margin-bottom:20px;">
+            <div class="info-title">X-Ray / MRI Images</div>
+            <div id="medicalImages" style="display:flex; gap:15px; flex-wrap:wrap; margin-top:15px;"></div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-title">Previous Medical Report PDF</div>
+            <a id="reportLink" href="#" target="_blank" style="color:#38bdf8; font-weight:bold; text-decoration:none;">
+              Open Medical Report
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="footer">
+      ESP32 + RFID + Google Sheets + Apps Script Medical Database System
+    </div>
+
+  </div>
+
+  <script>
+
+    // =====================================================
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW
+    // =====================================================
+
+    const API_URL = "PASTE_YOUR_APPS_SCRIPT_WEBAPP_URL_HERE";
+
+
+    // =====================================================
+    // FETCH RFID UID FROM GOOGLE SHEET
+    // =====================================================
+
+    async function fetchPatientData() {
+
+      try {
+
+        document.getElementById("loader").style.display = "block";
+
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        document.getElementById("loader").style.display = "none";
+
+        if (!data || data.error) {
+          showNotFound();
+          return;
+        }
+
+        document.getElementById("uidDisplay").innerText = data.uid;
+        document.getElementById("status").innerText = "Patient Record Loaded";
+
+        showPatient(data);
+
+      } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("status").innerText = "Connection Error";
+
+      }
+    }
+
+
+    // =====================================================
+    // SHOW PATIENT DATA
+    // =====================================================
+
+    function showPatient(data) {
+
+      document.getElementById("notFound").style.display = "none";
+      document.getElementById("patientCard").style.display = "block";
+
+      document.getElementById("patientName").innerText = data.name;
+      document.getElementById("patientUID").innerText = "UID: " + data.uid;
+
+      document.getElementById("avatar").innerText = data.name.charAt(0);
+
+      document.getElementById("height").innerText = data.height;
+      document.getElementById("weight").innerText = data.weight;
+      document.getElementById("age").innerText = data.age;
+      document.getElementById("gender").innerText = data.gender;
+      document.getElementById("blood").innerText = data.blood;
+      document.getElementById("phone").innerText = data.phone;
+      document.getElementById("doctor").innerText = data.doctor;
+      document.getElementById("hospital").innerText = data.hospital;
+      document.getElementById("condition").innerText = data.condition;
+      document.getElementById("visit").innerText = data.visit;
+      document.getElementById("reason").innerText = data.reason;
+      document.getElementById("diagnosis").innerText = data.diagnosis;
+      document.getElementById("allergies").innerText = data.allergies;
+      document.getElementById("emergency").innerText = data.emergency;
+      document.getElementById("updated").innerText = data.updated;
+
+      const imageContainer = document.getElementById("medicalImages");
+      imageContainer.innerHTML = "";
+
+      if (data.images && data.images.length > 0) {
+
+        data.images.forEach(img => {
+
+          const image = document.createElement("img");
+
+          image.src = img;
+          image.style.width = "220px";
+          image.style.height = "220px";
+          image.style.objectFit = "cover";
+          image.style.borderRadius = "18px";
+          image.style.border = "2px solid rgba(255,255,255,0.1)";
+
+          imageContainer.appendChild(image);
+        });
+      }
+
+      document.getElementById("reportLink").href = data.report;
+    }
+
+
+    // =====================================================
+    // SHOW NOT FOUND
+    // =====================================================
+
+    function showNotFound() {
+
+      document.getElementById("patientCard").style.display = "none";
+      document.getElementById("notFound").style.display = "block";
+
+      document.getElementById("status").innerText = "Card Not Registered";
+    }
+
+
+    // =====================================================
+    // AUTO REFRESH EVERY 2 SECONDS
+    // =====================================================
+
+    fetchPatientData();
+
+    setInterval(() => {
+      fetchPatientData();
+    }, 2000);
+
+  </script>
+
+</body>
+</html>
